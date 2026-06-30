@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Doped Crystal — Probability-Cloud Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ground:#150e21; --ground-2:#1d1430; --surface:#241836; --surface-2:#2c1f42;
+    --edge:#3a2a58; --ink:#ece1f7; --ink-soft:#bfaed6; --ink-mute:#8c7aa6;
+    --violet:#b98bff; --violet-deep:#7c4bd8;
+    --substrate:#ffce5c;   /* silicon: group IV, valence 4 */
+    --donor:#5cd3ff;       /* n-type: valence 5 */
+    --acceptor:#ff7aa8;    /* p-type: valence 3 */
+    --build:#5eead4;       /* deposited / grown on the die */
+    --dim:#8a6fc0;         /* inner-shell density */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 700px at 78% -8%, rgba(124,75,216,.28), transparent 60%),
+      radial-gradient(900px 600px at 8% 12%, rgba(120,60,180,.18), transparent 55%),
+      var(--ground);
+    color:var(--ink); font-family:"Space Grotesk",system-ui,sans-serif; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:99;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px;}
+
+  header{padding:84px 0 40px;}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--violet);margin-bottom:26px;}
+  .masthead{display:grid;grid-template-columns:1.25fr .85fr;gap:48px;align-items:center;}
+  h1{font-family:"Fraunces",serif;font-weight:500;font-size:clamp(44px,8vw,92px);
+    line-height:.96;letter-spacing:-.015em;color:var(--ink);}
+  h1 em{font-style:italic;color:var(--violet);}
+  .thesis{margin-top:26px;max-width:46ch;font-size:18px;color:var(--ink-soft);}
+  .count{margin-top:30px;display:flex;flex-wrap:wrap;border-top:1px solid var(--edge);
+    padding-top:20px;font-family:"JetBrains Mono",monospace;}
+  .count div{padding-right:28px;margin-right:28px;border-right:1px solid var(--edge);}
+  .count div:last-child{border-right:0;}
+  .count b{display:block;font-size:30px;font-weight:700;line-height:1;color:var(--ink);}
+  .count span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);}
+
+  .hero-atom{aspect-ratio:1;width:100%;max-width:360px;justify-self:center;
+    display:flex;align-items:center;justify-content:center;position:relative;}
+  .hero-atom canvas{width:100%;height:100%;}
+  .hero-cap{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;
+    color:var(--substrate);text-transform:uppercase;white-space:nowrap;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 26px;margin:14px 0 0;padding:18px 0;
+    border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);}
+  .legend .item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);}
+  .dot{width:11px;height:11px;border-radius:50%;box-shadow:0 0 10px currentColor;}
+  .legend .note{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--ink-mute);
+    margin-left:auto;align-self:center;}
+
+  .about{margin:18px 0 0;font-size:14.5px;color:var(--ink-soft);max-width:84ch;}
+  .about b{color:var(--ink);font-weight:500;}
+
+  section{padding:60px 0 8px;}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:8px;}
+  .sec-head h2{font-family:"Fraunces",serif;font-weight:500;font-size:clamp(26px,4vw,38px);
+    letter-spacing:-.01em;color:var(--ink);}
+  .sec-head .tag{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.06em;
+    padding:4px 11px;border-radius:999px;border:1px solid var(--edge);color:var(--ink-soft);white-space:nowrap;}
+  .sec-sub{max-width:70ch;color:var(--ink-soft);margin:6px 0 30px;font-size:16px;}
+  .sec-sub code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--surface-2);
+    padding:1px 6px;border-radius:5px;color:var(--violet);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:18px;}
+  .card{background:linear-gradient(180deg,var(--surface),var(--ground-2));
+    border:1px solid var(--edge);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+    transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;}
+  .card:hover{transform:translateY(-4px);border-color:var(--violet-deep);
+    box-shadow:0 18px 40px -22px rgba(124,75,216,.7);}
+  .atom-box{position:relative;aspect-ratio:1.18;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 44%,rgba(124,75,216,.14),transparent 68%);}
+  .atom-box canvas{width:92%;height:92%;}
+  .z-badge{position:absolute;top:12px;left:13px;font-family:"JetBrains Mono",monospace;
+    font-size:12px;color:var(--ink-mute);}
+  .z-badge b{color:var(--ink);font-weight:700;}
+  .val-badge{position:absolute;top:12px;right:13px;font-family:"JetBrains Mono",monospace;
+    font-size:11px;letter-spacing:.04em;padding:3px 8px;border-radius:999px;
+    border:1px solid var(--edge);background:rgba(0,0,0,.18);}
+  .sym-tag{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px;letter-spacing:.1em;opacity:.55;}
+  .meta{padding:16px 18px 20px;border-top:1px solid var(--edge);}
+  .meta .name{display:flex;align-items:baseline;gap:9px;margin-bottom:8px;}
+  .meta .name h3{font-family:"Fraunces",serif;font-weight:500;font-size:22px;color:var(--ink);}
+  .meta .name .sym{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14px;color:var(--ink-mute);}
+  .meta p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;}
+  .role-line{margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:11px;
+    letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+
+  footer{margin-top:72px;padding:40px 0 70px;border-top:1px solid var(--edge);
+    color:var(--ink-mute);font-size:13.5px;max-width:80ch;}
+  footer b{color:var(--ink-soft);font-weight:500;}
+  footer em{color:var(--donor);font-style:normal;}
+  footer .sig{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;margin-top:22px;color:var(--violet);}
+  a{color:var(--violet);}
+
+  @media (max-width:760px){
+    .masthead{grid-template-columns:1fr;gap:30px;}
+    .hero-atom{order:-1;max-width:260px;}
+    header{padding:54px 0 28px;}
+    .legend .note{margin-left:0;width:100%;}
+  }
+  @media (prefers-reduced-motion:reduce){.card{transition:none;}html{scroll-behavior:auto;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Semiconductor materials · probability-cloud edition</div>
+    <div class="masthead">
+      <div>
+        <h1>The <em>doped</em><br>crystal</h1>
+        <p class="thesis">Pure silicon barely conducts — its four valence electrons lock into a flawless lattice with nothing left to carry current. A processor is what happens when you contaminate it on purpose: a few foreign atoms per million, placed with intent, turn an inert wafer into a billion switches.</p>
+        <div class="count">
+          <div><b>1</b><span>substrate</span></div>
+          <div><b>7</b><span>dopants</span></div>
+          <div><b>9</b><span>build materials</span></div>
+        </div>
+      </div>
+      <div class="hero-atom" id="hero">
+        <span class="hero-cap">Si · the substrate</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="item"><span class="dot" style="color:var(--substrate)"></span>Substrate (valence 4)</div>
+      <div class="item"><span class="dot" style="color:var(--donor)"></span>Donor — n-type (valence 5)</div>
+      <div class="item"><span class="dot" style="color:var(--acceptor)"></span>Acceptor — p-type (valence 3)</div>
+      <div class="item"><span class="dot" style="color:var(--build)"></span>Build material</div>
+      <div class="note">outer glow = valence shell</div>
+    </div>
+
+    <p class="about"><b>Reading the cloud.</b> Each atom is its electron probability density — dots cluster where the electron is most likely to be, sparse where it isn't. A denser shell means more electrons live there; the coloured outer glow is the valence shell that decides how the atom dopes. The cloud doesn't move — we slowly rotate the viewpoint to show its depth, and it shimmers to remind you these are probabilities, not fixed positions.</p>
+  </header>
+
+  <main id="sections"></main>
+
+  <footer>
+    <p><b>About this depiction.</b> The clouds are sampled from a screened, hydrogen-like model and are spherically averaged — qualitatively faithful in the things that matter here (the number of shells, how their radius grows outward, and a density set by how many electrons each shell holds), but not a full Hartree–Fock solution. Because every closed subshell is spherically symmetric, a free atom's <em>total</em> electron density really is a nest of fuzzy spheres. The directional shapes you may have seen — p-orbital dumbbells, d-orbital cloverleaves — belong to single orbitals and emerge when atoms bond, not in the free-atom total. So no dumbbells are drawn on lone atoms; that would be a different cartoon.</p>
+    <p style="margin-top:14px;"><b>One honest distinction.</b> Only the seven dopants are actually doped <em>into</em> the silicon — they sit in the lattice and donate or accept one carrier because they carry one electron more (group V) or one fewer (group III) than silicon's four. The nine build materials are grown or deposited <em>on</em> the die: oxides and nitrides for insulation, high-k for the gate, metals for the wiring. Counts reflect a mainstream CMOS logic flow; exotic processes recruit more of the table.</p>
+    <div class="sig">Atomic reference · v2 · probability-cloud edition</div>
+  </footer>
+
+</div>
+
+<script>
+const TAU = Math.PI*2;
+const reduce = (window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) || false;
+
+const ELEMENTS = {
+  Si:{name:"Silicon",   z:14, shells:[2,8,4],            valence:4, role:"substrate"},
+  P :{name:"Phosphorus",z:15, shells:[2,8,5],            valence:5, role:"donor"},
+  As:{name:"Arsenic",   z:33, shells:[2,8,18,5],         valence:5, role:"donor"},
+  Sb:{name:"Antimony",  z:51, shells:[2,8,18,18,5],      valence:5, role:"donor"},
+  B :{name:"Boron",     z:5,  shells:[2,3],              valence:3, role:"acceptor"},
+  Al:{name:"Aluminium", z:13, shells:[2,8,3],            valence:3, role:"acceptor"},
+  Ga:{name:"Gallium",   z:31, shells:[2,8,18,3],         valence:3, role:"acceptor"},
+  In:{name:"Indium",    z:49, shells:[2,8,18,18,3],      valence:3, role:"acceptor"},
+  Ge:{name:"Germanium", z:32, shells:[2,8,18,4],         valence:null, role:"build"},
+  O :{name:"Oxygen",    z:8,  shells:[2,6],              valence:null, role:"build"},
+  N :{name:"Nitrogen",  z:7,  shells:[2,5],              valence:null, role:"build"},
+  Hf:{name:"Hafnium",   z:72, shells:[2,8,18,32,10,2],   valence:null, role:"build"},
+  Ti:{name:"Titanium",  z:22, shells:[2,8,10,2],         valence:null, role:"build"},
+  Ta:{name:"Tantalum",  z:73, shells:[2,8,18,32,11,2],   valence:null, role:"build"},
+  Cu:{name:"Copper",    z:29, shells:[2,8,18,1],         valence:null, role:"build"},
+  W :{name:"Tungsten",  z:74, shells:[2,8,18,32,12,2],   valence:null, role:"build"},
+  Co:{name:"Cobalt",    z:27, shells:[2,8,15,2],         valence:null, role:"build"}
+};
+const ROLE_COLOR = {substrate:"#ffce5c",donor:"#5cd3ff",acceptor:"#ff7aa8",build:"#5eead4"};
+const DIM = "#8a6fc0";
+
+const SECTIONS = [
+  {id:"substrate", title:"The substrate", tag:"GROUP IV · valence 4",
+   sub:"Everything is carved from this one crystal. Silicon's four valence electrons bond in every direction, leaving no free carriers — it is the blank slate that doping writes on.",
+   items:["Si"],
+   blurbs:{Si:"The wafer itself. Four bonds in a perfect tetrahedral lattice means almost no free charge — undoped silicon is nearly an insulator. Doping is the only reason it switches."}},
+  {id:"donors", title:"n-type dopants", tag:"GROUP V · donors",
+   sub:"Each carries <code>five</code> valence electrons against silicon's four. Four go into bonds; the spare is barely held and drifts free into the conduction band — a negative carrier. The valence shell glows brightest on every atom below.",
+   items:["P","As","Sb"],
+   blurbs:{
+     P:"The workhorse donor. Diffuses readily, so it fills wells and source/drain regions. Drops one loosely-bound electron into the lattice as a free carrier.",
+     As:"A heavier donor that moves slowly through silicon — that sluggishness buys sharp, shallow junctions, which is why it favours tight modern source/drain.",
+     Sb:"Very low diffusivity: it stays put through later high-temperature steps. Used for buried layers where the dopant must not wander."}},
+  {id:"acceptors", title:"p-type dopants", tag:"GROUP III · acceptors",
+   sub:"Each carries <code>three</code> valence electrons — one short of a full set of bonds. The empty bond is a mobile <em>hole</em> that behaves like a positive carrier.",
+   items:["B","Al","Ga","In"],
+   blurbs:{
+     B:"The dominant acceptor. Small and fast-diffusing, it defines p-wells and p-type source/drain. Each atom leaves one hole behind.",
+     Al:"An acceptor — and historically the wiring metal too. As a dopant it shows up more in power and silicon-carbide devices than in mainstream logic.",
+     Ga:"Higher solubility than boron in some recipes, so it's reached for when a heavier, well-controlled p-doping is needed.",
+     In:"A large, deep acceptor. Implanted shallow into the channel to tune a transistor's threshold voltage rather than to bulk-dope a region."}},
+  {id:"build", title:"Built on the die", tag:"GROWN · DEPOSITED",
+   sub:"Not lattice dopants — these are grown or deposited <em>onto</em> the wafer to insulate, gate, and wire the transistors. They are why the doped silicon becomes a working circuit.",
+   items:["Ge","O","N","Hf","Ti","Ta","Cu","W","Co"],
+   blurbs:{
+     Ge:"Silicon's group-IV cousin. Alloyed as SiGe to strain the channel, which lets carriers move faster — a free speed boost with no extra doping.",
+     O:"Forms SiO₂, the native insulator that made silicon win. Gate oxides, isolation trenches, and interlayer dielectrics all lean on oxygen.",
+     N:"Builds nitrides — Si₃N₄ and TiN — used as diffusion barriers, etch stops, and to toughen gate dielectrics against leakage.",
+     Hf:"The high-k hero. HfO₂ replaced SiO₂ as the gate dielectric around the 45 nm node, letting the gate stay electrically thin without leaking.",
+     Ti:"Forms silicide contacts and TiN liners — the low-resistance handshake between silicon and the metal wiring above it.",
+     Ta:"A TaN barrier lines copper trenches so copper atoms can't diffuse into the silicon and poison the devices.",
+     Cu:"The interconnect metal since the late 1990s. Lower resistance than aluminium, it carries signals across a dozen-plus stacked wiring layers.",
+     W:"Fills the tiny vertical vias and contact plugs. It tolerates heat and packs into high-aspect holes that copper struggles to fill.",
+     Co:"A newer contact and liner metal at the smallest nodes, where copper and tungsten start losing the resistance battle in the tightest features."}}
+];
+
+/* ---------- probability cloud ---------- */
+function gauss(){
+  let a=0,b=0; while(a===0)a=Math.random(); b=Math.random();
+  return Math.sqrt(-2*Math.log(a))*Math.cos(TAU*b);
+}
+
+// Build a 3D point cloud whose density follows |psi|^2 (spherically averaged):
+// each shell is a fuzzy spherical layer; point count scales with electron count.
+function makeCloud(shells){
+  const pts=[];
+  const nSh=shells.length;
+  for(let i=0;i<nSh;i++){
+    const isVal=(i===nSh-1);
+    const e=shells[i];
+    const frac = nSh===1 ? 0.7 : (i/(nSh-1));
+    const meanR = 0.16 + 0.82*Math.pow(frac,1.15);
+    const sigma = (0.46/nSh)*0.62 + 0.022;
+    let cnt = Math.round(e*11);
+    cnt = Math.min(cnt, isVal?150:108);
+    cnt = Math.max(cnt, isVal?46:10);
+    for(let k=0;k<cnt;k++){
+      let r = meanR + gauss()*sigma;
+      if(r<0.02) r=0.02;
+      const u=Math.random()*2-1;          // cosθ uniform -> isotropic
+      const ph=Math.random()*TAU;
+      const s=Math.sqrt(Math.max(0,1-u*u));
+      pts.push({
+        x:r*s*Math.cos(ph), y:r*u, z:r*s*Math.sin(ph),
+        val:isVal, ph:Math.random()*TAU, baseA:isVal?0.95:0.42
+      });
+    }
+  }
+  return pts;
+}
+
+function hexA(hex,a){
+  const h=hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function drawCloud(atom, now){
+  const {ctx,size,pts,color}=atom;
+  const cx=size/2, cy=size/2, R=size*0.37;
+  ctx.globalCompositeOperation='source-over';
+  ctx.clearRect(0,0,size,size);
+  ctx.globalCompositeOperation='lighter';
+
+  const ang = atom.rot + (reduce?0:now*atom.spin);
+  const ca=Math.cos(ang), sa=Math.sin(ang);
+  const sizeK = size/210;
+
+  for(const p of pts){
+    const x = p.x*ca + p.z*sa;
+    const z = -p.x*sa + p.z*ca;
+    const y = p.y;
+    let depth=(z+1)/2; if(depth<0)depth=0; else if(depth>1)depth=1;
+    const sx=cx + x*R, sy=cy + y*R;
+    const tw = reduce?1:(0.6+0.4*Math.sin(p.ph + now*0.0018));
+    const a = p.baseA*(0.28+0.72*depth)*tw;
+    const rad = (p.val?1.75:1.35)*(0.65+0.7*depth)*sizeK;
+    ctx.beginPath();
+    ctx.fillStyle = p.val ? hexA(color,a) : hexA(DIM,a);
+    ctx.arc(sx,sy,rad,0,TAU);
+    ctx.fill();
+  }
+  // dense nucleus core
+  const ng=ctx.createRadialGradient(cx,cy,0,cx,cy,size*0.11);
+  ng.addColorStop(0,hexA(color,0.85));
+  ng.addColorStop(0.5,hexA(color,0.18));
+  ng.addColorStop(1,hexA(color,0));
+  ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(cx,cy,size*0.11,0,TAU); ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+}
+
+/* ---------- setup ---------- */
+const atoms=[];
+function setupCanvas(canvas,size){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=size*dpr; canvas.height=size*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  return ctx;
+}
+function makeAtomCanvas(symbol,mount,size,spin){
+  const data=ELEMENTS[symbol];
+  const canvas=document.createElement('canvas');
+  canvas.style.width='100%'; canvas.style.height='100%';
+  mount.appendChild(canvas);
+  const ctx=setupCanvas(canvas,size);
+  const a={ctx,size,canvas,color:ROLE_COLOR[data.role],
+    pts:makeCloud(data.shells), rot:Math.random()*TAU, spin:spin, visible:true};
+  atoms.push(a); return a;
+}
+
+function buildSections(){
+  const root=document.getElementById('sections');
+  SECTIONS.forEach(sec=>{
+    const s=document.createElement('section'); s.id=sec.id;
+    s.innerHTML=`<div class="sec-head"><h2>${sec.title}</h2><span class="tag">${sec.tag}</span></div>
+      <p class="sec-sub">${sec.sub}</p><div class="grid"></div>`;
+    const grid=s.querySelector('.grid');
+    sec.items.forEach(sym=>{
+      const el=ELEMENTS[sym];
+      const card=document.createElement('div'); card.className='card';
+      const valLabel = el.valence!==null ? `valence ${el.valence}` : 'build';
+      const roleText={substrate:'Substrate',donor:'Donor · n-type',acceptor:'Acceptor · p-type',build:'Build material'}[el.role];
+      card.innerHTML=`
+        <div class="atom-box">
+          <span class="z-badge">Z&nbsp;<b>${el.z}</b></span>
+          <span class="val-badge" style="color:${ROLE_COLOR[el.role]}">${valLabel}</span>
+          <span class="sym-tag" style="color:${ROLE_COLOR[el.role]}">${sym}</span>
+        </div>
+        <div class="meta">
+          <div class="name"><h3>${el.name}</h3><span class="sym">${sym}</span></div>
+          <p>${sec.blurbs[sym]}</p>
+          <div class="role-line" style="color:${ROLE_COLOR[el.role]}">
+            <span class="dot" style="color:${ROLE_COLOR[el.role]}"></span>${roleText}
+          </div>
+        </div>`;
+      grid.appendChild(card);
+      makeAtomCanvas(sym, card.querySelector('.atom-box'), 210, 0.00024);
+    });
+    root.appendChild(s);
+  });
+}
+buildSections();
+
+// hero silicon, larger, slightly livelier rotation
+const heroMount=document.getElementById('hero');
+const heroCanvas=document.createElement('canvas');
+heroCanvas.style.width='100%'; heroCanvas.style.height='100%';
+heroMount.insertBefore(heroCanvas, heroMount.firstChild);
+const heroCtx=setupCanvas(heroCanvas,360);
+const hero={ctx:heroCtx,size:360,canvas:heroCanvas,color:ROLE_COLOR.substrate,
+  pts:makeCloud(ELEMENTS.Si.shells), rot:0.4, spin:0.00032, visible:true};
+atoms.push(hero);
+
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{ const a=atoms.find(x=>x.canvas===e.target); if(a)a.visible=e.isIntersecting; });
+  },{rootMargin:'80px'});
+  atoms.forEach(a=>io.observe(a.canvas));
+}
+
+if(reduce){
+  atoms.forEach(a=>drawCloud(a,0));
+}else{
+  function loop(now){
+    for(const a of atoms){ if(a.visible) drawCloud(a,now); }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
