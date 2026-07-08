@@ -4,6 +4,6 @@ slug  : doped-crystal-cloud
 seal  : f8370806b9affb2fa78d4223bb22476f9813edac0518641e89dd371d0a3c640b
 prev  : 83d796ba85d7682696a3f043e56972fc2f4c5736a9441cfdf9474b587c8b8f92
 link  : c68806a93e90bbb4d3e079a452f945b4a32a666b867fd1e5e6addf984bc12ff5
-head  : 3447d3a0533aaf1e29a8bdc67a9774884fb3ae9dbc8a17064b7a008ca3c4ec90
+head  : 13f9ace173ef2e60af38912ba329b4afcb5a38b84a0e4495e8d30327f8c99cc2
 
 — the tether: link = sha256(index|slug|seal|prev). the chain head commits to the whole corpus.
